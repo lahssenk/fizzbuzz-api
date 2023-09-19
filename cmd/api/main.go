@@ -10,6 +10,9 @@ import (
 
 	"log/slog"
 
+	"os/signal"
+	"syscall"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/lahssenk/fizzbuzz-api/middlewares"
 	"github.com/lahssenk/fizzbuzz-api/middlewares/authn"
@@ -28,45 +31,113 @@ const (
 	ENV_READ_HEADER_TIMEOUT = "READ_HEADER_TIMEOUT"
 	ENV_WRITE_TIMEOUT       = "WRITE_TIMEOUT"
 	ENV_IDLE_TIMEOUT        = "IDLE_TIMEOUT"
+	ENV_SHUTDOWN_TIMEOUT    = "SHUTDOWN_TIMEOUT"
 	ENV_MAX_HEADER_BYTES    = "MAX_HEADER_BYTES"
 	ENV_API_KEY             = "API_KEY"
 	defaultDuration         = time.Second * 3
+	defaultShutdownTimeout  = time.Second * 3
 	defaultMaxHeaderBytes   = 1024
 )
 
 func main() {
 	svc := fizzbuzz.NewService()
-	ctx := context.Background()
+
+	// wrap with cancel so that both server an stop eachother
+	ctx, cancel := context.WithCancel(
+		contextWithSigterm(context.Background()),
+	)
+	defer cancel()
 
 	var group errgroup.Group
 
+	apiAddr := readAddressFromEnv()
+	api := newAPIServer(ctx, apiAddr, svc)
+	adminAddr := readAdminAddressFromEnv()
+	admin := newAdminServer(ctx, adminAddr)
+
 	group.Go(func() error {
-		addr := readAddressFromEnv()
-		return runServer(ctx, addr, svc)
+		defer cancel()
+		defer slog.Info("admin server stopped")
+
+		slog.Info("start admin server...", "addr", adminAddr)
+		return runServer(admin)
 	})
 
 	group.Go(func() error {
-		addr := readAdminAddressFromEnv()
-		return runAdminServer(ctx, addr)
+		defer cancel()
+		defer slog.Info("api server stopped")
+
+		slog.Info("start api server...", "addr", apiAddr)
+		return runServer(api)
 	})
 
+	<-ctx.Done()
+	slog.Info("main context canceled")
+
+	timeout := parseDuration(os.Getenv(ENV_SHUTDOWN_TIMEOUT), defaultShutdownTimeout)
+	shutDownServer(admin, timeout)
+	shutDownServer(api, timeout)
+
+	// we should not need this, but it's good hygiene to wait for the group
+	// if we spawn some other goroutines
 	err := group.Wait()
-	expect("run servers", err)
+	slog.Info("both servers shut down")
+
+	slog.Error("group.Wait()", "err", err)
 }
 
-func runAdminServer(ctx context.Context, addr string) error {
+func contextWithSigterm(ctx context.Context) context.Context {
+	ctxWithCancel, cancel := context.WithCancel(ctx)
+	go func() {
+		defer cancel()
+
+		signalCh := make(chan os.Signal, 1)
+		signal.Notify(signalCh, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+		var counter int
+
+		for {
+			if counter == 2 {
+				slog.Error("force quit!")
+				os.Exit(1)
+			}
+
+			select {
+			case sig := <-signalCh:
+				slog.Info("caught signal", "sig", sig)
+			case <-ctx.Done():
+				slog.Info("context done before signal")
+			}
+
+			cancel()
+			counter++
+		}
+	}()
+
+	return ctxWithCancel
+}
+
+func runServer(s *http.Server) error {
+	return s.ListenAndServe()
+}
+
+// a simple admin server for health checks and metrics
+func newAdminServer(ctx context.Context, addr string) *http.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
-	return http.ListenAndServe(addr, mux)
+
+	return &http.Server{}
 }
 
-func runServer(ctx context.Context, addr string, svc fizzbuzz_v1.FizzBuzzServiceServer) error {
+// the fizzbuzz API
+func newAPIServer(ctx context.Context, addr string, svc fizzbuzz_v1.FizzBuzzServiceServer) *http.Server {
 	// use the grpc gateway runtime as router
 	r := runtime.NewServeMux()
 
+	// some toy middlewares
 	handler := middlewares.WrapHandler(
 		r,
 		authn.WithAPIKey(os.Getenv(ENV_API_KEY)),
@@ -76,7 +147,7 @@ func runServer(ctx context.Context, addr string, svc fizzbuzz_v1.FizzBuzzService
 	err := fizzbuzz_v1.RegisterFizzBuzzServiceHandlerServer(ctx, r, svc)
 	expect("register fizzbuzz handler", err)
 
-	server := http.Server{
+	return &http.Server{
 		Addr:              addr,
 		Handler:           handler,
 		ReadTimeout:       parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
@@ -85,13 +156,17 @@ func runServer(ctx context.Context, addr string, svc fizzbuzz_v1.FizzBuzzService
 		IdleTimeout:       parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
 		MaxHeaderBytes:    parseInt(ENV_MAX_HEADER_BYTES, defaultMaxHeaderBytes),
 	}
+}
 
-	slog.Info("start fizzbuzz server...", "addr", addr)
+func shutDownServer(s *http.Server, timeout time.Duration) {
+	shutCtx, cancel := context.WithTimeout(
+		context.Background(),
+		timeout,
+	)
 
-	err = server.ListenAndServe()
-	expect("listen and server", err)
+	defer cancel()
 
-	return nil
+	s.Shutdown(shutCtx)
 }
 
 func expect(op string, err error) {
