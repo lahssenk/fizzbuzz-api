@@ -120,13 +120,21 @@ func runServer(s *http.Server) error {
 
 // a simple admin server for health checks and metrics
 func newAdminServer(ctx context.Context, addr string) *http.Server {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	handler := http.NewServeMux()
+	handler.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
 
-	return &http.Server{}
+	return &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadTimeout:       parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
+		ReadHeaderTimeout: parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
+		WriteTimeout:      parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
+		IdleTimeout:       parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
+		MaxHeaderBytes:    parseInt(ENV_MAX_HEADER_BYTES, defaultMaxHeaderBytes),
+	}
 }
 
 // the fizzbuzz API
