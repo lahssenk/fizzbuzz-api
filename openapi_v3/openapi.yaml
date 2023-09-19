@@ -10,28 +10,34 @@ paths:
         get:
             tags:
                 - FizzBuzzService
+            description: Compute the FizzBuzz value for a range of integers, from 1 to <limit>
             operationId: FizzBuzzService_ComputeFizzBuzzRange
             parameters:
                 - name: string1
                   in: query
+                  description: custom value for fizz case
                   schema:
                     type: string
                 - name: string2
                   in: query
+                  description: custom value for buzz case
                   schema:
                     type: string
                 - name: int1
                   in: query
+                  description: modulo that will match fizz case
                   schema:
                     type: integer
                     format: int32
                 - name: int2
                   in: query
+                  description: modulo that wil match buzz case
                   schema:
                     type: integer
                     format: int32
                 - name: limit
                   in: query
+                  description: upper bound of the range on which to compute fizzbuzz
                   schema:
                     type: integer
                     format: int32
@@ -57,6 +63,7 @@ components:
                     type: array
                     items:
                         type: string
+                    description: each item is the mapped string value for the corresponding integer value in input range
         GoogleProtobufAny:
             type: object
             properties:

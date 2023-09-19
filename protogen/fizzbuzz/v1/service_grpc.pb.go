@@ -26,6 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FizzBuzzServiceClient interface {
+	// Compute the FizzBuzz value for a range of integers, from 1 to <limit>
 	ComputeFizzBuzzRange(ctx context.Context, in *ComputeFizzBuzzRangeRequest, opts ...grpc.CallOption) (*ComputeFizzBuzzRangeResponse, error)
 }
 
@@ -50,6 +51,7 @@ func (c *fizzBuzzServiceClient) ComputeFizzBuzzRange(ctx context.Context, in *Co
 // All implementations must embed UnimplementedFizzBuzzServiceServer
 // for forward compatibility
 type FizzBuzzServiceServer interface {
+	// Compute the FizzBuzz value for a range of integers, from 1 to <limit>
 	ComputeFizzBuzzRange(context.Context, *ComputeFizzBuzzRangeRequest) (*ComputeFizzBuzzRangeResponse, error)
 	mustEmbedUnimplementedFizzBuzzServiceServer()
 }

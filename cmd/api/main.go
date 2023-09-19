@@ -30,7 +30,6 @@ const (
 	ENV_IDLE_TIMEOUT        = "IDLE_TIMEOUT"
 	ENV_MAX_HEADER_BYTES    = "MAX_HEADER_BYTES"
 	ENV_API_KEY             = "API_KEY"
-	ENV_ROLE                = "ROLE"
 	defaultDuration         = time.Second * 3
 	defaultMaxHeaderBytes   = 1024
 )

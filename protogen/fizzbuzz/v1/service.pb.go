@@ -27,11 +27,16 @@ type ComputeFizzBuzzRangeRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// custom value for fizz case
 	String1 string `protobuf:"bytes,1,opt,name=string1,proto3" json:"string1,omitempty"`
+	// custom value for buzz case
 	String2 string `protobuf:"bytes,2,opt,name=string2,proto3" json:"string2,omitempty"`
-	Int1    int32  `protobuf:"varint,3,opt,name=int1,proto3" json:"int1,omitempty"`
-	Int2    int32  `protobuf:"varint,4,opt,name=int2,proto3" json:"int2,omitempty"`
-	Limit   int32  `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
+	// modulo that will match fizz case
+	Int1 int32 `protobuf:"varint,3,opt,name=int1,proto3" json:"int1,omitempty"`
+	// modulo that wil match buzz case
+	Int2 int32 `protobuf:"varint,4,opt,name=int2,proto3" json:"int2,omitempty"`
+	// upper bound of the range on which to compute fizzbuzz
+	Limit int32 `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
 }
 
 func (x *ComputeFizzBuzzRangeRequest) Reset() {
@@ -106,6 +111,7 @@ type ComputeFizzBuzzRangeResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// each item is the mapped string value for the corresponding integer value in input range
 	Output []string `protobuf:"bytes,1,rep,name=output,proto3" json:"output,omitempty"`
 }
 

@@ -8,13 +8,22 @@ See [requirements](REQUIREMENTS.md) for a detailed specification of the API.
 
 The server reads a tiny configuration from environment variables:
 - SERVER_HOST
-- SERVR_PORT
+- SERVER_PORT
+- ADMIN_PORT
+
+and some optional ones:
+READ_TIMEOUT
+READ_HEADER_TIMEOUT
+WRITE_TIMEOUT
+IDLE_TIMEOUT
+MAX_HEADER_BYTES
+API_KEY
 
 ## Go
-```go run cmd/api/main.go```
+```make gorun```
 
 ## Docker
-```docker build -t fizzbuzz . && docker run -rm fizzbuzz```
+```make ci```
 
 # DESIGN
 
