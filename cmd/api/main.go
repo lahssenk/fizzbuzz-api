@@ -2,25 +2,22 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 
-	"log/slog"
-
-	"os/signal"
-	"syscall"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/lahssenk/fizzbuzz-api/pkg/middlewares"
 	"github.com/lahssenk/fizzbuzz-api/pkg/middlewares/authn"
 	fizzbuzz_v1 "github.com/lahssenk/fizzbuzz-api/pkg/protogen/fizzbuzz/v1"
 	"github.com/lahssenk/fizzbuzz-api/pkg/service/fizzbuzz"
-	"golang.org/x/sync/errgroup"
-	// "github.com/prometheus/client_golang/prometheus"
-	// "github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -133,7 +130,11 @@ func newAdminServer(ctx context.Context, addr string) *http.Server {
 }
 
 // the fizzbuzz API
-func newAPIServer(ctx context.Context, addr string, svc fizzbuzz_v1.FizzBuzzServiceServer) *http.Server {
+func newAPIServer(
+	ctx context.Context,
+	addr string,
+	svc fizzbuzz_v1.FizzBuzzServiceServer,
+) *http.Server {
 	// use the grpc gateway runtime as router
 	r := runtime.NewServeMux()
 
