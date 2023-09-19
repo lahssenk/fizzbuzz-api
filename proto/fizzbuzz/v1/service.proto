@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package fizzbuzz.v1;
+
+// import "buf/validate/validate.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/lahsenk/fizzbuzz-api/protogen/fizzbuzz/v1;fizzbuzz_v1";
+
+service FizzBuzzService {
+    rpc ComputeFizzBuzzRange(ComputeFizzBuzzRangeRequest) returns (ComputeFizzBuzzRangeResponse){
+        option (google.api.http) = {
+            // no request body for a GET, pass data as query params
+            get: "/v1/fizzbuzz"
+        };
+    }
+}
+
+message ComputeFizzBuzzRangeRequest {
+    string string1=1;
+    string string2=2;
+    int32 int1=3;
+    int32 int2=4;
+    int32 limit=5;
+}
+
+message ComputeFizzBuzzRangeResponse{
+    repeated string output=1;
+}
