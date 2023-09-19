@@ -19,4 +19,4 @@ build:
 	docker build -t fizzbuzz .
 
 ci: build
-	docker run --rm -it -p 8080:8080 fizzbuzz
+	docker run --rm -it -p 8080:8080 -p 8081:8081 fizzbuzz
