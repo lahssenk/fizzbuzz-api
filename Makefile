@@ -12,7 +12,13 @@ protoc:
 	--openapi_out=./openapi_v3 --openapi_opt=enum_type=string,default_response=true \
 	./proto/fizzbuzz/v1/*.proto
 
-gorun:
+govet:
+	go vet ./...
+
+gotest: govet
+	go test ./... 
+	
+gorun: gotest
 	API_KEY=testkey SERVER_HOST=localhost SERVER_PORT=8080 ADMIN_PORT=8081 go run ./cmd/api/...
 
 build:

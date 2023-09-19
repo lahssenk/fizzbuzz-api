@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	fizzbuzz_v1 "github.com/lahssenk/fizzbuzz-api/protogen/fizzbuzz/v1"
+	fizzbuzz_v1 "github.com/lahssenk/fizzbuzz-api/pkg/protogen/fizzbuzz/v1"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

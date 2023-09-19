@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	fizzbuzz_v1 "github.com/lahssenk/fizzbuzz-api/protogen/fizzbuzz/v1"
+	fizzbuzz_v1 "github.com/lahssenk/fizzbuzz-api/pkg/protogen/fizzbuzz/v1"
 	"github.com/stretchr/testify/require"
 )
 
