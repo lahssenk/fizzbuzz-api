@@ -6,9 +6,9 @@ PROTOS = $(shell find . -iname '*.proto')
 
 .PHONY: protoc 
 protoc:
-	protoc -I=./proto --go_out=./protogen --go_opt=paths=source_relative \
-	--go-grpc_out=./protogen --go-grpc_opt=paths=source_relative \
-	--grpc-gateway_out=./protogen --grpc-gateway_opt paths=source_relative \
+	protoc -I=./proto --go_out=./pkg/protogen --go_opt=paths=source_relative \
+	--go-grpc_out=./pkg/protogen --go-grpc_opt=paths=source_relative \
+	--grpc-gateway_out=./pkg/protogen --grpc-gateway_opt paths=source_relative \
 	--openapi_out=./openapi_v3 --openapi_opt=enum_type=string,default_response=true \
 	./proto/fizzbuzz/v1/*.proto
 

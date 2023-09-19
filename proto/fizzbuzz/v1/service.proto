@@ -4,11 +4,8 @@ package fizzbuzz.v1;
 
 // import "buf/validate/validate.proto";
 import "google/api/annotations.proto";
-import "google/api/field_behavior.proto";
-import "google/api/resource.proto";
-import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/lahsenk/fizzbuzz-api/protogen/fizzbuzz/v1;fizzbuzz_v1";
+option go_package = "github.com/lahsenk/fizzbuzz-api/pkg/protogen/fizzbuzz/v1;fizzbuzz_v1";
 
 service FizzBuzzService {
   // Compute the FizzBuzz value for a range of integers, from 1 to <limit>
