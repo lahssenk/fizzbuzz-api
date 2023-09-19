@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package fizzbuzz.v1;
 
-// import "buf/validate/validate.proto";
 import "google/api/annotations.proto";
 
 option go_package = "github.com/lahsenk/fizzbuzz-api/pkg/protogen/fizzbuzz/v1;fizzbuzz_v1";
