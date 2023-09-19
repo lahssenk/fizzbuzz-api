@@ -11,7 +11,7 @@ The project contains:
 - the binary [cmd/api/main.go](/cmd/api/main.go)
 - the fizzbuzz service [pkg/service/fizzbuzz](/pkg/service/fizzbuzz/) with tests
 - the proto definition of the API [proto/fizzbuzz/v1](/proto/fizzbuzz/v1/)
-- the auto generated go code from proto [pg/protogen/](/pkg/protogen/)
+- the auto generated go code from proto [pkg/protogen/](/pkg/protogen/)
 - the auto generated open api v3 yaml [openapi_v3](/openapi_v3/)
 - a dummy authentication middleware checking for an api key in Authorization header [/pkg/middlewares](/pkg/middlewares/authn/)
 
