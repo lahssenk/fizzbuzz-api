@@ -15,6 +15,14 @@ The project contains:
 - the auto generated open api v3 yaml [openapi_v3](/openapi_v3/)
 - a dummy authentication middleware checking for an api key in Authorization header [/middlewares](/middlewares/authn/)
 
+# TRY WITH CURL
+
+```
+curl --request GET \
+  --url 'http://localhost:8080/v1/fizzbuzz?string1=fizz&string2=buzz&int1=3&int2=5&limit=100' \
+  --header 'Authorization: testkey'
+```
+
 # RUN
 
 The server reads a tiny configuration from environment variables:
