@@ -1,5 +1,6 @@
 package fizzbuzz
 
+// some error variants
 const (
 	ErrString1Required string = "string1 required"
 	ErrString2Required string = "string2 required"

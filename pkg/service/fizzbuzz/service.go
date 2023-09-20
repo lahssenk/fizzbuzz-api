@@ -7,8 +7,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Service handling the fizzbuzz feature
 type Service struct{}
 
+// NewService constructs a fizzbuzz Service
 func NewService() *Service {
 	return &Service{}
 }
