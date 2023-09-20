@@ -1,0 +1,150 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strconv"
+
+	"github.com/gorilla/schema"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+type loggingMiddleware struct {
+	handler http.Handler
+	writer  io.Writer
+}
+
+func (m *loggingMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(m.writer, "[%s] %s %s\n", r.RemoteAddr, r.Method, r.URL.Path)
+	m.handler.ServeHTTP(w, r)
+}
+
+func main() {
+	// Create a new HTTP server
+	server := http.Server{
+		Addr: ":8080",
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// ...
+		}),
+	}
+
+	// Create a new Prometheus metric to collect the total number of requests to the `/api/users` endpoint
+	requestCounter := promhttp.NewCounter(
+		promhttp.CounterOpts{
+			Name: "requests_total",
+			Help: "The total number of requests",
+		},
+	)
+
+	promhttp.
+
+		// wrap the handler with request counter
+		server.Handler = promhttp.InstrumentHandlerCounter(requestCounter, server.Handler)
+
+	// Start the HTTP server
+	server.ListenAndServe()
+}
+
+func main2() {
+	// Create a new HTTP server
+	server := http.Server{
+		Addr: ":8080",
+		Handler: promhttp.InstrumentHandlerDuration(
+			promhttp.DefaultGatherer,
+			http.FileServer(http.Dir("./public")),
+		),
+	}
+
+	// Start the HTTP server
+	server.ListenAndServe()
+}
+
+func fizzbuzzHandler(w http.ResponseWriter, r *http.Request) {
+	// Get the number of fizzbuzz numbers to return from the request query string
+	count := r.URL.Query().Get("count")
+	if count == "" {
+		count = "100"
+	}
+
+	// Convert the count to an integer
+	countInt, err := strconv.Atoi(count)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Invalid count: %v", err)
+		return
+	}
+
+	// Generate the list of fizzbuzz numbers
+	fizzbuzz := []string{}
+	for i := 1; i <= countInt; i++ {
+		if i%3 == 0 && i%5 == 0 {
+			fizzbuzz = append(fizzbuzz, "FizzBuzz")
+		} else if i%3 == 0 {
+			fizzbuzz = append(fizzbuzz, "Fizz")
+		} else if i%5 == 0 {
+			fizzbuzz = append(fizzbuzz, "Buzz")
+		} else {
+			fizzbuzz = append(fizzbuzz, strconv.Itoa(i))
+		}
+	}
+
+	// Write the list of fizzbuzz numbers to the response body
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, "%v", fizzbuzz)
+}
+
+type QueryParams struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+}
+
+func parseQueryParamsWithGorilla(r *http.Request) (*QueryParams, error) {
+	queryValues, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &QueryParams{}
+	d := schema.NewDecoder()
+	if err := d.Decode(p, queryValues); err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func parseQueryParams(r *http.Request) error {
+	// Parse the query string into a url.Values object
+	queryValues, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		return err
+	}
+
+	// Create a new QueryParams struct
+	queryParams := QueryParams{}
+
+	// Assign the values of the query params to the corresponding fields of the struct
+	queryParams.Name = queryValues.Get("name")
+	queryParams.Age, err = strconv.Atoi(queryValues.Get("age"))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func main3() {
+	// Create a new HTTP server
+	server := http.Server{
+		Addr:    ":8080",
+		Handler: nil,
+	}
+
+	// Register the fizzbuzz handler function
+	http.HandleFunc("/v1/fizzbuzz", fizzbuzzHandler)
+
+	// Start the HTTP server
+	server.ListenAndServe()
+}

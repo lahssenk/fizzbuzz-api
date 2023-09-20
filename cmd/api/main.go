@@ -11,11 +11,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/go-chi/chi/v5"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/lahssenk/fizzbuzz-api/pkg/middlewares"
-	"github.com/lahssenk/fizzbuzz-api/pkg/middlewares/authn"
 	fizzbuzz_v1 "github.com/lahssenk/fizzbuzz-api/pkg/protogen/fizzbuzz/v1"
 	"github.com/lahssenk/fizzbuzz-api/pkg/service/fizzbuzz"
 )
@@ -118,17 +120,32 @@ func runServer(s *http.Server) error {
 	return s.ListenAndServe()
 }
 
-// a simple admin server for health checks and metrics
+// A simple admin server for health checks and metrics.
+// This is listening on another port because admin endpoint
+// should not be access by the consumer of the API
 func newAdminServer(ctx context.Context, addr string) *http.Server {
-	handler := http.NewServeMux()
-	handler.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+	// use a custom registry to remove the default go runtime metrics
+	// from promhttp
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(middlewares.Metrics()...)
+	promHandler := promhttp.HandlerFor(registry, promhttp.HandlerOpts{
+		EnableOpenMetrics: false,
 	})
+
+	r := chi.NewRouter()
+	r.Use(
+		chimiddleware.Logger,
+	)
+
+	r.Get(
+		"/health",
+		func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("OK")) },
+	)
+	r.Get("/metrics", promHandler.ServeHTTP)
 
 	return &http.Server{
 		Addr:              addr,
-		Handler:           handler,
+		Handler:           r,
 		ReadTimeout:       parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
 		ReadHeaderTimeout: parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
 		WriteTimeout:      parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
@@ -137,28 +154,28 @@ func newAdminServer(ctx context.Context, addr string) *http.Server {
 	}
 }
 
-// the fizzbuzz API
+// The fizzbuzz API server.
 func newAPIServer(
 	ctx context.Context,
 	addr string,
 	svc fizzbuzz_v1.FizzBuzzServiceServer,
 ) *http.Server {
-	// use the grpc gateway runtime as router
-	r := runtime.NewServeMux()
-
-	// some toy middlewares
-	handler := middlewares.WrapHandler(
-		r,
-		authn.WithAPIKey(os.Getenv(ENV_API_KEY)),
+	r := chi.NewRouter()
+	r.Use(
+		chimiddleware.Logger,
+		middlewares.WithMetrics(),
+		middlewares.WithAPIKey(os.Getenv(ENV_API_KEY)),
 	)
 
+	r.Get("/fizzbuzz", func(w http.ResponseWriter, req *http.Request) {
+		w.Write([]byte("fizzbuzz"))
+	})
+
 	// register routes defined in proto annotations
-	err := fizzbuzz_v1.RegisterFizzBuzzServiceHandlerServer(ctx, r, svc)
-	expect("register fizzbuzz handler", err)
 
 	return &http.Server{
 		Addr:              addr,
-		Handler:           handler,
+		Handler:           r,
 		ReadTimeout:       parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
 		ReadHeaderTimeout: parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
 		WriteTimeout:      parseDuration(ENV_READ_HEADER_TIMEOUT, defaultDuration),
