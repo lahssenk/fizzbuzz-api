@@ -1,36 +1,52 @@
 package fizzbuzz
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
-	fizzbuzz_v1 "github.com/lahssenk/fizzbuzz-api/pkg/protogen/fizzbuzz/v1"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
-var _ fizzbuzz_v1.FizzBuzzServiceServer = (*Service)(nil)
-
-type Service struct {
-	fizzbuzz_v1.UnimplementedFizzBuzzServiceServer
-}
+type Service struct{}
 
 func NewService() *Service {
 	return &Service{}
 }
 
-func (s *Service) ComputeFizzBuzzRange(ctx context.Context, req *fizzbuzz_v1.ComputeFizzBuzzRangeRequest) (*fizzbuzz_v1.ComputeFizzBuzzRangeResponse, error) {
-	if err := validateComputeFizzBuzzRangeRequest(req); err != nil {
-		return nil, status.New(codes.InvalidArgument, err.Error()).Err()
+// ComputeFizzBuzzRangeParams contains the input data defining the fizzbuzz task
+type ComputeFizzBuzzRangeParams struct {
+	// custom value for fizz case
+	String1 string
+	// custom value for buzz case
+	String2 string
+	// modulo that will match fizz case
+	Int1 int
+	// modulo that wil match buzz case
+	Int2 int
+	// upper bound of the range on which to compute fizzbuzz
+	Limit int
+}
+
+// ComputeFizzBuzzRangeOutput contains the output as a list of strings where each
+// item is the result of the confugured fizzbuzz applied to the matching int value
+// in the range from 1 to <limit>
+type ComputeFizzBuzzRangeOutput struct {
+	Data []string `json:"data"`
+}
+
+// ComputeFizzBuzzRange applies fizzbuzz confugured with the params to a range from 1 to <limit>
+func (s *Service) ComputeFizzBuzzRange(
+	params *ComputeFizzBuzzRangeParams,
+) (*ComputeFizzBuzzRangeOutput, error) {
+	if err := validateComputeFizzBuzzRangeParams(params); err != nil {
+		return nil, err
 	}
 
-	m := newMapperFromRequest(req)
+	m := newMapperFromParams(params)
 	res := m.computeFizzBuzzRange()
 
-	resp := fizzbuzz_v1.ComputeFizzBuzzRangeResponse{
-		Output: res,
+	resp := ComputeFizzBuzzRangeOutput{
+		Data: res,
 	}
 
 	return &resp, nil
@@ -46,31 +62,31 @@ func (m mapper) computeFizzBuzzRange() []string {
 	return res
 }
 
-func validateComputeFizzBuzzRangeRequest(req *fizzbuzz_v1.ComputeFizzBuzzRangeRequest) error {
+func validateComputeFizzBuzzRangeParams(params *ComputeFizzBuzzRangeParams) error {
 	switch {
-	case req.String1 == "":
+	case params.String1 == "":
 		return errors.Errorf(ErrString1Required)
-	case req.String2 == "":
+	case params.String2 == "":
 		return errors.Errorf(ErrString2Required)
-	case req.Int1 < 1 || req.Int1 > 100:
+	case params.Int1 < 1 || params.Int1 > 100:
 		return errors.Errorf(ErrInvalidInt1)
-	case req.Int2 < 1 || req.Int2 > 100:
+	case params.Int2 < 1 || params.Int2 > 100:
 		return errors.Errorf(ErrInvalidInt2)
-	case req.Limit < 1 || req.Limit > 100:
+	case params.Limit < 1 || params.Limit > 100:
 		return errors.Errorf(ErrInvalidLimit)
 	default:
 		return nil
 	}
 }
 
-func newMapperFromRequest(req *fizzbuzz_v1.ComputeFizzBuzzRangeRequest) *mapper {
+func newMapperFromParams(params *ComputeFizzBuzzRangeParams) *mapper {
 	return &mapper{
-		fizz:     req.String1,
-		buzz:     req.String2,
-		fizzbuzz: fmt.Sprintf("%s%s", req.String1, req.String2),
-		fizzmod:  int(req.Int1),
-		buzzmod:  int(req.Int2),
-		limit:    int(req.Limit),
+		fizz:     params.String1,
+		buzz:     params.String2,
+		fizzbuzz: fmt.Sprintf("%s%s", params.String1, params.String2),
+		fizzmod:  int(params.Int1),
+		buzzmod:  int(params.Int2),
+		limit:    int(params.Limit),
 	}
 }
 

@@ -6,7 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/lahssenk/fizzbuzz-api/pkg/api"
 )
 
 // wrapper type to intercept WriteHeader call so that we can observe
@@ -50,6 +53,10 @@ func Metrics() []prometheus.Collector {
 	}
 }
 
+func WithLogger() func(http.Handler) http.Handler {
+	return middleware.Logger
+}
+
 func WithMetrics() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
@@ -76,8 +83,14 @@ func WithAPIKey(apiKey string) func(http.Handler) http.Handler {
 				slog.Info("Auth middleware: compare Authorization header with target API Key")
 				val := r.Header.Get("Authorization")
 				if val != apiKey {
-					w.WriteHeader(http.StatusUnauthorized)
-					w.Write([]byte("Not Authenticated"))
+					api.RespondJSON(
+						w,
+						api.ErrorResponse{
+							ErrorCode: "NotAuthenticated",
+							Message:   "found invalid or empty APIKey in Authorization header",
+						},
+						http.StatusUnauthorized,
+					)
 					return
 				}
 			}

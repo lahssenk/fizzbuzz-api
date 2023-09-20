@@ -1,32 +1,30 @@
 package fizzbuzz
 
 import (
-	"context"
 	"reflect"
 	"testing"
 
-	fizzbuzz_v1 "github.com/lahssenk/fizzbuzz-api/pkg/protogen/fizzbuzz/v1"
 	"github.com/stretchr/testify/require"
 )
 
 func TestService_ComputeFizzBuzzRange(t *testing.T) {
 	tests := []struct {
 		name    string
-		req     *fizzbuzz_v1.ComputeFizzBuzzRangeRequest
-		resp    *fizzbuzz_v1.ComputeFizzBuzzRangeResponse
+		req     *ComputeFizzBuzzRangeParams
+		resp    *ComputeFizzBuzzRangeOutput
 		wantErr bool
 	}{
 		{
 			name: "OK",
-			req: &fizzbuzz_v1.ComputeFizzBuzzRangeRequest{
+			req: &ComputeFizzBuzzRangeParams{
 				String1: "fizz",
 				String2: "buzz",
 				Int1:    3,
 				Int2:    5,
 				Limit:   16,
 			},
-			resp: &fizzbuzz_v1.ComputeFizzBuzzRangeResponse{
-				Output: []string{
+			resp: &ComputeFizzBuzzRangeOutput{
+				Data: []string{
 					"1", "2", "fizz", "4", "buzz", "fizz", "7", "8", "fizz", "buzz", "11", "fizz", "13", "14", "fizzbuzz", "16",
 				},
 			},
@@ -34,19 +32,18 @@ func TestService_ComputeFizzBuzzRange(t *testing.T) {
 		},
 		{
 			name:    "invalid input",
-			req:     &fizzbuzz_v1.ComputeFizzBuzzRangeRequest{},
+			req:     &ComputeFizzBuzzRangeParams{},
 			resp:    nil,
 			wantErr: true,
 		},
 	}
 
 	svc := NewService()
-	ctx := context.Background()
 
 	for ind := range tests {
 		test := tests[ind]
 		t.Run(test.name, func(t *testing.T) {
-			resp, err := svc.ComputeFizzBuzzRange(ctx, test.req)
+			resp, err := svc.ComputeFizzBuzzRange(test.req)
 			if (err != nil) != test.wantErr {
 				t.Errorf("unexpected err: %v", err)
 				return
@@ -56,14 +53,14 @@ func TestService_ComputeFizzBuzzRange(t *testing.T) {
 				return
 			}
 
-			require.Equal(t, resp.Output, test.resp.Output)
+			require.Equal(t, resp.Data, test.resp.Data)
 		})
 	}
 }
 
-func Test_validateComputeFizzBuzzRangeRequest(t *testing.T) {
+func Test_validateComputeFizzBuzzRangeParams(t *testing.T) {
 	type args struct {
-		req *fizzbuzz_v1.ComputeFizzBuzzRangeRequest
+		req *ComputeFizzBuzzRangeParams
 	}
 
 	tests := []struct {
@@ -74,7 +71,7 @@ func Test_validateComputeFizzBuzzRangeRequest(t *testing.T) {
 		{
 			name: "OK",
 			args: args{
-				req: &fizzbuzz_v1.ComputeFizzBuzzRangeRequest{
+				req: &ComputeFizzBuzzRangeParams{
 					String1: "fizz",
 					String2: "buzz",
 					Int1:    3,
@@ -87,7 +84,7 @@ func Test_validateComputeFizzBuzzRangeRequest(t *testing.T) {
 		{
 			name: "string1 required",
 			args: args{
-				req: &fizzbuzz_v1.ComputeFizzBuzzRangeRequest{
+				req: &ComputeFizzBuzzRangeParams{
 					String1: "",
 					String2: "buzz",
 					Int1:    3,
@@ -100,7 +97,7 @@ func Test_validateComputeFizzBuzzRangeRequest(t *testing.T) {
 		{
 			name: "string2 required",
 			args: args{
-				req: &fizzbuzz_v1.ComputeFizzBuzzRangeRequest{
+				req: &ComputeFizzBuzzRangeParams{
 					String1: "fizz",
 					String2: "",
 					Int1:    3,
@@ -113,7 +110,7 @@ func Test_validateComputeFizzBuzzRangeRequest(t *testing.T) {
 		{
 			name: "invalid int1",
 			args: args{
-				req: &fizzbuzz_v1.ComputeFizzBuzzRangeRequest{
+				req: &ComputeFizzBuzzRangeParams{
 					String1: "fizz",
 					String2: "buzz",
 					Int1:    0,
@@ -126,7 +123,7 @@ func Test_validateComputeFizzBuzzRangeRequest(t *testing.T) {
 		{
 			name: "invalid int2",
 			args: args{
-				req: &fizzbuzz_v1.ComputeFizzBuzzRangeRequest{
+				req: &ComputeFizzBuzzRangeParams{
 					String1: "fizz",
 					String2: "buzz",
 					Int1:    3,
@@ -139,7 +136,7 @@ func Test_validateComputeFizzBuzzRangeRequest(t *testing.T) {
 		{
 			name: "invalid limit",
 			args: args{
-				req: &fizzbuzz_v1.ComputeFizzBuzzRangeRequest{
+				req: &ComputeFizzBuzzRangeParams{
 					String1: "fizz",
 					String2: "buzz",
 					Int1:    3,
@@ -155,8 +152,12 @@ func Test_validateComputeFizzBuzzRangeRequest(t *testing.T) {
 		test := tests[ind]
 
 		t.Run(test.name, func(t *testing.T) {
-			if err := validateComputeFizzBuzzRangeRequest(test.args.req); (err != nil) != test.wantErr {
-				t.Errorf("validateComputeFizzBuzzRangeRequest() error = %v, wantErr %v", err, test.wantErr)
+			if err := validateComputeFizzBuzzRangeParams(test.args.req); (err != nil) != test.wantErr {
+				t.Errorf(
+					"validateComputeFizzBuzzRangeParams() error = %v, wantErr %v",
+					err,
+					test.wantErr,
+				)
 			}
 		})
 	}
