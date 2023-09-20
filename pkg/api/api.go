@@ -34,22 +34,6 @@ func NewAPI() API {
 // returns JSON response with the outcome of fizzbuzz.
 // Returns BadRequest if it fails to read from query, or if ComputeFizzBuzzRange fails.
 func (a API) FizzBuzzHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		slog.Error(
-			"api: fizzbuzz handler: request.ParseForm failed",
-			"err",
-			err,
-			"path",
-			r.URL.Path,
-		)
-		RespondJSON(
-			w,
-			ErrorResponse{ErrorCode: ErrInternalError, Message: "something went wrong"},
-			http.StatusInternalServerError,
-		)
-		return
-	}
-
 	params, err := parseParamsFromQuery(r.URL.Query())
 	if err != nil {
 		RespondJSON(
