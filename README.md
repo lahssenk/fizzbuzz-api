@@ -11,6 +11,7 @@ The project contains:
 - the binary [cmd/main.go](/cmd/main.go)
 - the fizzbuzz service [pkg/service/fizzbuzz](/pkg/service/fizzbuzz/) with tests
 - some middlewares [/pkg/middlewares](/pkg/middlewares/)
+- the API [/pkg/api/api.go](/pkg/api/api.go)
 
 # TRY WITH CURL
 
