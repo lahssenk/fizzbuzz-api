@@ -9,3 +9,9 @@ It must return a list of strings with numbers from 1 to limit, where:
 all multiples of int1 are replaced by string1,
 all multiples of int2 are replaced by string2,
 all multiples of int1 and int2 are replaced by string1string2
+
+Code should be:
+- easy to understand
+- trustworthy
+- easy to deploy
+- easy to maintain
